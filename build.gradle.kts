@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.spotless) apply false
     alias(libs.plugins.kotlin) apply false
     alias(libs.plugins.publish) apply false
+    id("io.papermc.paperweight.userdev") version "2.0.0-beta.21" apply false
 }
 
 group = "me.devnatan"

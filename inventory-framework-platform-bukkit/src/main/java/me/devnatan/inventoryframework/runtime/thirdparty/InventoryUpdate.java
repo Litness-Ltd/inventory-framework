@@ -71,22 +71,36 @@ public final class InventoryUpdate {
     public static final Object[] DUMMY_COLOR_MODIFIERS = new Object[0];
 
     static {
+        final boolean modern = McVersion.isModern();
+
         // Initialize classes.
         CHAT_MESSAGE = SUPPORTS_19 ? null : ReflectionUtils.getNMSClass("network.chat", "ChatMessage");
-        PACKET_PLAY_OUT_OPEN_WINDOW = ReflectionUtils.getNMSClass("network.protocol.game", "PacketPlayOutOpenWindow");
-        I_CHAT_BASE_COMPONENT = ReflectionUtils.getNMSClass("network.chat", "IChatBaseComponent");
+        PACKET_PLAY_OUT_OPEN_WINDOW = modern
+                ? ReflectionUtils.getNMSClass("network.protocol.game", "ClientboundOpenScreenPacket")
+                : ReflectionUtils.getNMSClass("network.protocol.game", "PacketPlayOutOpenWindow");
+        I_CHAT_BASE_COMPONENT = modern
+                ? ReflectionUtils.getNMSClass("network.chat", "Component")
+                : ReflectionUtils.getNMSClass("network.chat", "IChatBaseComponent");
+        CONTAINER = modern
+                ? ReflectionUtils.getNMSClass("world.inventory", "AbstractContainerMenu")
+                : ReflectionUtils.getNMSClass("world.inventory", "Container");
         // Check if we use containers, otherwise, can throw errors on older versions.
-        CONTAINERS = useContainers() ? ReflectionUtils.getNMSClass("world.inventory", "Containers") : null;
-        CONTAINER = ReflectionUtils.getNMSClass("world.inventory", "Container");
-        I_CHAT_MUTABLE_COMPONENT =
-                SUPPORTS_19 ? ReflectionUtils.getNMSClass("network.chat", "IChatMutableComponent") : null;
+        CONTAINERS = useContainers() ? (modern
+                ? ReflectionUtils.getNMSClass("world.inventory", "MenuType")
+                : ReflectionUtils.getNMSClass("world.inventory", "Containers")) : null;
+        I_CHAT_MUTABLE_COMPONENT = SUPPORTS_19 ? (modern
+                ? ReflectionUtils.getNMSClass("network.chat", "MutableComponent")
+                : ReflectionUtils.getNMSClass("network.chat", "IChatMutableComponent")) : null;
         MINECRAFT_MENU_TYPE = getClassOrNull("net.minecraft.world.inventory.MenuType");
 
         // Initialize methods.
         getBukkitView = getMethod(CONTAINER, "getBukkitView", MethodType.methodType(InventoryView.class));
         literal = SUPPORTS_19
                 ? getMethod(
-                        I_CHAT_BASE_COMPONENT, "b", MethodType.methodType(I_CHAT_MUTABLE_COMPONENT, String.class), true)
+                        I_CHAT_BASE_COMPONENT,
+                        modern ? "literal" : "b",
+                        MethodType.methodType(I_CHAT_MUTABLE_COMPONENT, String.class),
+                        true)
                 : null;
 
         final Class<?> paperAdventure = getClassOrNull("io.papermc.paper.adventure.PaperAdventure");
@@ -109,9 +123,10 @@ public final class InventoryUpdate {
                 getConstructor(PACKET_PLAY_OUT_OPEN_WINDOW, int.class, String.class, I_CHAT_BASE_COMPONENT, int.class);
 
         // Initialize fields.
-        activeContainer =
-                getField(ENTITY_PLAYER, CONTAINER, "activeContainer", "bR", "bV", "bW", "bU", "bP", "containerMenu");
-        windowId = getField(CONTAINER, int.class, "windowId", "j", "containerId");
+        activeContainer = modern
+                ? getField(ENTITY_PLAYER, CONTAINER, "containerMenu")
+                : getField(ENTITY_PLAYER, CONTAINER, "activeContainer", "bR", "bV", "bW", "bU", "bP", "containerMenu");
+        windowId = getField(CONTAINER, int.class, modern ? "containerId" : "windowId", "j", "containerId");
     }
 
     private static Class<?> getClassOrNull(String className) {
@@ -177,7 +192,10 @@ public final class InventoryUpdate {
             if (container == null) return;
 
             // If the container was added in a newer version than the current, return.
-            if (container.getContainerVersion() > ReflectionUtils.MINOR_NUMBER && useContainers()) {
+            // Only applies on 1.x; on MC 26+ MINOR_NUMBER is 1 (the minor of 26.1.x) and all containers are valid.
+            if (McVersion.current().getMajor() == 1
+                    && container.getContainerVersion() > ReflectionUtils.MINOR_NUMBER
+                    && useContainers()) {
                 return;
             }
 
@@ -344,7 +362,7 @@ public final class InventoryUpdate {
      * @return whether to use containers.
      */
     public static boolean useContainers() {
-        return ReflectionUtils.MINOR_NUMBER > 13;
+        return McVersion.isModern() || ReflectionUtils.MINOR_NUMBER > 13;
     }
 
     /**
@@ -426,6 +444,8 @@ public final class InventoryUpdate {
                 String name = (version == 14 && this == CARTOGRAPHY_TABLE) ? "CARTOGRAPHY" : name();
                 // Since 1.17, containers go from "a" to "x".
                 if (version > 16 && version <= 20) name = String.valueOf(alphabet[ordinal()]);
+                // Modern (26+): MenuType fields use lowercase 'x', e.g. GENERIC_9x3.
+                if (McVersion.isModern()) name = name.replace("X", "x");
 
                 Field field = CONTAINERS.getField(name);
                 return field.get(null);

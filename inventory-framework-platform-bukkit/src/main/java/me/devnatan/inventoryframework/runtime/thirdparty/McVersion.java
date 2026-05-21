@@ -143,4 +143,8 @@ public class McVersion implements Comparable<McVersion> {
     public static boolean supports(int minorNumber, int patchNumber) {
         return CURRENT_VERSION.isAtLeast(1, minorNumber, patchNumber);
     }
+
+    public static boolean isModern() {
+        return CURRENT_VERSION.getMajor() > 1 || CURRENT_VERSION.getMinor() >= 17;
+    }
 }

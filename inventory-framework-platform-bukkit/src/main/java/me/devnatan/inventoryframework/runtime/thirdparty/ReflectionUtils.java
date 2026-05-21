@@ -163,31 +163,31 @@ public final class ReflectionUtils {
 
     /**
      * The class for the NMS EntityPlayer.
+	 * @see net.minecraft.server.level.ServerPlayer
      */
     public static final Class<?> ENTITY_PLAYER;
 
     static {
-        ENTITY_PLAYER = getNMSClass("server.level", "EntityPlayer");
+        final boolean modern = McVersion.isModern();
+        ENTITY_PLAYER = getNMSClass("server.level", modern ? "ServerPlayer" : "EntityPlayer");
         CRAFT_PLAYER = getCraftClass("entity.CraftPlayer");
-        Class<?> playerConnection = getNMSClass("server.network", "PlayerConnection");
+        Class<?> playerConnection = getNMSClass("server.network",
+                modern ? "ServerGamePacketListenerImpl" : "PlayerConnection");
 
         MethodHandles.Lookup lookup = MethodHandles.lookup();
         MethodHandle sendPacket = null, getHandle = null, connection = null;
 
         try {
-            connection = lookup.findGetter(
-                    ENTITY_PLAYER,
-                    v(21, 3, "f").v(20, "c").v(17, "b").v(21, 6, "g").orElse("playerConnection"),
-                    playerConnection);
+            String connField = modern ? "connection"
+                    : v(21, 3, "f").v(20, "c").v(17, "b").v(21, 6, "g").orElse("playerConnection");
+            connection = lookup.findGetter(ENTITY_PLAYER, connField, playerConnection);
 
             getHandle = lookup.findVirtual(CRAFT_PLAYER, "getHandle", MethodType.methodType(ENTITY_PLAYER));
 
-            final VersionHandler<String> methodVersion =
-                    v(21, "send").v(20, "b").v(18, "a");
-
+            String sendMethod = modern ? "send" : v(21, "send").v(20, "b").v(18, "a").orElse("sendPacket");
             sendPacket = lookup.findVirtual(
                     playerConnection,
-                    methodVersion.orElse("sendPacket"),
+                    sendMethod,
                     MethodType.methodType(void.class, getNMSClass("network.protocol", "Packet")));
         } catch (NoSuchMethodException | NoSuchFieldException | IllegalAccessException ex) {
             ex.printStackTrace();
