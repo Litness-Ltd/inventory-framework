@@ -15,6 +15,7 @@ version = property("version")
 fun Project.nextGitTag(): String {
     val latestTag = providers.exec {
         commandLine("git", "describe", "--tags", "--abbrev=0")
+        isIgnoreExitValue = true
     }.standardOutput.asText.get().trim()
 
     val versionParts = latestTag.removePrefix("v").split(".")
