@@ -11,7 +11,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Supplier;
-
 import me.devnatan.inventoryframework.component.ComponentFactory;
 import me.devnatan.inventoryframework.component.ItemComponentBuilder;
 import me.devnatan.inventoryframework.component.Pagination;
@@ -39,6 +38,7 @@ import me.devnatan.inventoryframework.pipeline.PlatformInitInterceptor;
 import me.devnatan.inventoryframework.pipeline.PlatformOpenInterceptor;
 import me.devnatan.inventoryframework.pipeline.PlatformRenderInterceptor;
 import me.devnatan.inventoryframework.pipeline.PlatformUpdateHandlerInterceptor;
+import me.devnatan.inventoryframework.pipeline.RowColumnSlotInterceptor;
 import me.devnatan.inventoryframework.pipeline.ScheduledUpdateStartInterceptor;
 import me.devnatan.inventoryframework.pipeline.ScheduledUpdateStopInterceptor;
 import me.devnatan.inventoryframework.pipeline.StandardPipelinePhases;
@@ -51,6 +51,7 @@ import me.devnatan.inventoryframework.state.State;
 import me.devnatan.inventoryframework.state.StateAccess;
 import me.devnatan.inventoryframework.state.StateAccessImpl;
 import me.devnatan.inventoryframework.state.StateValue;
+import me.devnatan.inventoryframework.state.timer.TimerState;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -615,6 +616,7 @@ public abstract class PlatformView<
         pipeline.intercept(StandardPipelinePhases.LAYOUT_RESOLUTION, new LayoutResolutionInterceptor());
         pipeline.intercept(StandardPipelinePhases.FIRST_RENDER, new PlatformRenderInterceptor());
         pipeline.intercept(StandardPipelinePhases.FIRST_RENDER, new LayoutRenderInterceptor());
+        pipeline.intercept(StandardPipelinePhases.FIRST_RENDER, new RowColumnSlotInterceptor());
         pipeline.intercept(StandardPipelinePhases.FIRST_RENDER, new AvailableSlotInterceptor());
         pipeline.intercept(StandardPipelinePhases.FIRST_RENDER, new FirstRenderInterceptor());
         pipeline.intercept(StandardPipelinePhases.VIEWER_ADDED, new ScheduledUpdateStartInterceptor());
@@ -690,6 +692,12 @@ public abstract class PlatformView<
     public final <T> MutableState<T> initialState(@NotNull String key) {
         requireNotInitialized();
         return stateAccess.initialState(key);
+    }
+
+    @Override
+    public final TimerState timerState(long intervalInTicks) {
+        requireNotInitialized();
+        return stateAccess.timerState(intervalInTicks);
     }
 
     @Override

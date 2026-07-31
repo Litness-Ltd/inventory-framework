@@ -2,7 +2,6 @@ plugins {
     id("me.devnatan.inventoryframework.library")
     alias(libs.plugins.shadowjar)
     alias(libs.plugins.bukkit)
-    id("io.papermc.paperweight.userdev")
 }
 
 inventoryFramework {
@@ -13,8 +12,7 @@ inventoryFramework {
 dependencies {
     api(projects.inventoryFrameworkPlatform)
     runtimeOnly(projects.inventoryFrameworkAnvilInput)
-    //compileOnly(libs.spigot)
-    paperweight.paperDevBundle("26.1.2.build.+")
+    compileOnly(libs.spigot)
     testCompileOnly(libs.spigot)
     testRuntimeOnly(libs.spigot)
     testImplementation(projects.inventoryFrameworkApi)
@@ -26,7 +24,7 @@ tasks.shadowJar {
     archiveBaseName.set("inventory-framework")
     archiveAppendix.set("bukkit")
 
-    relocate("com.tcoded.folialib", "me.devnatan.inventoryframework.libs.folialib")
+    relocate("com.tcoded.folialib", "me.devnatan.inventoryframework.thirdparty.folialib")
 
     dependencies {
         exclude {

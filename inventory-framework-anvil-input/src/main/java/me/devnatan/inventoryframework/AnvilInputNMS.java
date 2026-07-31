@@ -55,39 +55,47 @@ class AnvilInputNMS {
                     getNMSClass("world.inventory", modern ? "AnvilMenu" : "ContainerAnvil"),
                     "AnvilMenu/ContainerAnvil NMS class not found");
 
-            final Class<?> playerInventoryClass = getNMSClass(
-                    "world.entity.player", modern ? "Inventory" : "PlayerInventory");
+            final Class<?> playerInventoryClass =
+                    getNMSClass("world.entity.player", modern ? "Inventory" : "PlayerInventory");
 
             ANVIL_CONSTRUCTOR = getConstructor(ANVIL, int.class, playerInventoryClass);
             CONTAINER_CHECK_REACHABLE = setFieldHandle(CONTAINER, boolean.class, "checkReachable");
 
-            final Class<?> containerPlayer = getNMSClass(
-                    "world.inventory", modern ? "InventoryMenu" : "ContainerPlayer");
+            final Class<?> containerPlayer =
+                    getNMSClass("world.inventory", modern ? "InventoryMenu" : "ContainerPlayer");
             PLAYER_DEFAULT_CONTAINER = getField(ENTITY_PLAYER, containerPlayer, "inventoryMenu", "bQ", "bR");
 
-            final String activeContainerFieldName = modern ? "containerMenu"
-                    : (ReflectionUtils.supportsMC1202() ? "bS" : "bR");
+            final String activeContainerFieldName =
+                    modern ? "containerMenu" : (ReflectionUtils.supportsMC1202() ? "bS" : "bR");
             SET_PLAYER_ACTIVE_CONTAINER = setField(
-                    ENTITY_PLAYER, containerPlayer,
+                    ENTITY_PLAYER,
+                    containerPlayer,
                     modern ? "containerMenu" : "activeContainer",
-                    "containerMenu", activeContainerFieldName);
+                    "containerMenu",
+                    activeContainerFieldName);
 
             GET_PLAYER_NEXT_CONTAINER_COUNTER =
                     getMethod(ENTITY_PLAYER, "nextContainerCounter", MethodType.methodType(int.class));
 
             GET_PLAYER_INVENTORY = modern
                     ? getMethod(ENTITY_PLAYER, "getInventory", MethodType.methodType(playerInventoryClass))
-                    : getMethod(ENTITY_PLAYER, "fN", MethodType.methodType(playerInventoryClass), false, "fR", "getInventory");
+                    : getMethod(
+                            ENTITY_PLAYER,
+                            "fN",
+                            MethodType.methodType(playerInventoryClass),
+                            false,
+                            "fR",
+                            "getInventory");
 
-            CONTAINER_WINDOW_ID = setField(CONTAINER, int.class, modern ? "containerId" : "windowId", "containerId", "j");
+            CONTAINER_WINDOW_ID =
+                    setField(CONTAINER, int.class, modern ? "containerId" : "windowId", "containerId", "j");
 
-            final Class<?> slotListenerClass = getNMSClass(
-                    "world.inventory", modern ? "ContainerListener" : "ICrafting");
+            final Class<?> slotListenerClass =
+                    getNMSClass("world.inventory", modern ? "ContainerListener" : "ICrafting");
             ADD_CONTAINER_SLOT_LISTENER = getMethod(
-                    CONTAINER,
-                    modern ? "addSlotListener" : "a",
-                    MethodType.methodType(void.class, slotListenerClass));
-            INIT_MENU = getMethod(ENTITY_PLAYER, modern ? "initMenu" : "a", MethodType.methodType(void.class, CONTAINER));
+                    CONTAINER, modern ? "addSlotListener" : "a", MethodType.methodType(void.class, slotListenerClass));
+            INIT_MENU =
+                    getMethod(ENTITY_PLAYER, modern ? "initMenu" : "a", MethodType.methodType(void.class, CONTAINER));
 
             GET_TOP_INVENTORY =
                     getMethod(InventoryView.class, "getTopInventory", MethodType.methodType(Inventory.class));

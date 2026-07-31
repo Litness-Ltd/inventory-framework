@@ -85,12 +85,16 @@ public final class InventoryUpdate {
                 ? ReflectionUtils.getNMSClass("world.inventory", "AbstractContainerMenu")
                 : ReflectionUtils.getNMSClass("world.inventory", "Container");
         // Check if we use containers, otherwise, can throw errors on older versions.
-        CONTAINERS = useContainers() ? (modern
-                ? ReflectionUtils.getNMSClass("world.inventory", "MenuType")
-                : ReflectionUtils.getNMSClass("world.inventory", "Containers")) : null;
-        I_CHAT_MUTABLE_COMPONENT = SUPPORTS_19 ? (modern
-                ? ReflectionUtils.getNMSClass("network.chat", "MutableComponent")
-                : ReflectionUtils.getNMSClass("network.chat", "IChatMutableComponent")) : null;
+        CONTAINERS = useContainers()
+                ? (modern
+                        ? ReflectionUtils.getNMSClass("world.inventory", "MenuType")
+                        : ReflectionUtils.getNMSClass("world.inventory", "Containers"))
+                : null;
+        I_CHAT_MUTABLE_COMPONENT = SUPPORTS_19
+                ? (modern
+                        ? ReflectionUtils.getNMSClass("network.chat", "MutableComponent")
+                        : ReflectionUtils.getNMSClass("network.chat", "IChatMutableComponent"))
+                : null;
         MINECRAFT_MENU_TYPE = getClassOrNull("net.minecraft.world.inventory.MenuType");
 
         // Initialize methods.
@@ -192,7 +196,9 @@ public final class InventoryUpdate {
             if (container == null) return;
 
             // If the container was added in a newer version than the current, return.
-            // Only applies on 1.x; on MC 26+ MINOR_NUMBER is 1 (the minor of 26.1.x) and all containers are valid.
+            // Only applies on 1.x; on the year-based scheme (26+) MINOR_NUMBER is the release's own
+            // minor (e.g. 1 for 26.1.x) and is unrelated to the container-added-in-1.x versions below,
+            // so all containers are considered valid there.
             if (McVersion.current().getMajor() == 1
                     && container.getContainerVersion() > ReflectionUtils.MINOR_NUMBER
                     && useContainers()) {

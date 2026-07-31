@@ -10,7 +10,9 @@ import me.devnatan.inventoryframework.runtime.view.AnvilInputSample;
 import me.devnatan.inventoryframework.runtime.view.AutoUpdate;
 import me.devnatan.inventoryframework.runtime.view.Failing;
 import me.devnatan.inventoryframework.runtime.view.PaginationOrientation;
+import me.devnatan.inventoryframework.runtime.view.RowColumnSample;
 import me.devnatan.inventoryframework.runtime.view.SimplePagination;
+import me.devnatan.inventoryframework.runtime.view.TimerSample;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -30,6 +32,8 @@ public class IFExampleCommandExecutor implements CommandExecutor, TabCompleter {
         views.put("simple-pagination", SimplePagination.class);
         views.put("auto-update", AutoUpdate.class);
         views.put("pagination", PaginationOrientation.class);
+        views.put("timer", TimerSample.class);
+        views.put("row-column", RowColumnSample.class);
     }
 
     private final ViewFrame viewFrame;
