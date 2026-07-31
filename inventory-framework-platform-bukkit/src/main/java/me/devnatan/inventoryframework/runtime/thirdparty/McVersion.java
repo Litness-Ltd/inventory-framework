@@ -5,29 +5,46 @@ import org.bukkit.Bukkit;
 
 public class McVersion implements Comparable<McVersion> {
 
-    private static final McVersion CURRENT_VERSION;
-
-    static {
-        final int currentMajor = Integer.parseInt(Bukkit.getBukkitVersion().split("\\.")[0]);
-        final int currentMinor =
-                Integer.parseInt(Bukkit.getBukkitVersion().split("\\.")[1].split("-")[0]);
-        boolean hasPatch = countColons(Bukkit.getBukkitVersion()) == 3;
-        final int currentPatch = hasPatch
-                ? Integer.parseInt(Bukkit.getBukkitVersion().split("\\.")[2].split("-")[0])
-                : 0;
-
-        CURRENT_VERSION = new McVersion(currentMajor, currentMinor, currentPatch);
+    /**
+     * Held apart from {@link McVersion} itself so that loading the class — to call
+     * {@link #parse(String)} from a test, for one — does not require a running server.
+     */
+    private static final class Current {
+        private static final McVersion VALUE = parse(Bukkit.getBukkitVersion());
     }
 
-    private static int countColons(final String string) {
-        int count = 0;
-        char[] arr = string.toCharArray();
-        for (int i = 0; i < string.length(); i++) {
-            if (arr[i] == '.') {
-                count++;
-            }
+    /**
+     * Reads the Minecraft version out of a Bukkit version string.
+     *
+     * <p>The qualifier that follows the numbers is not part of the version and differs per
+     * distribution: {@code 1.20.6-R0.1-SNAPSHOT} on Spigot, {@code 26.2.build.84-stable} on the
+     * builds Paper publishes under the year-based scheme — where the third dot-separated component
+     * is the word {@code build} rather than a patch number.
+     *
+     * @param bukkitVersion The version as reported by {@link Bukkit#getBukkitVersion()}.
+     * @return The Minecraft version, with any component that is not a number left at zero.
+     */
+    static McVersion parse(final String bukkitVersion) {
+        final int qualifierAt = bukkitVersion.indexOf('-');
+        final String[] parts =
+                (qualifierAt == -1 ? bukkitVersion : bukkitVersion.substring(0, qualifierAt)).split("\\.");
+
+        final int[] numbers = new int[] {0, 0, 0};
+        for (int i = 0; i < Math.min(parts.length, numbers.length); i++) {
+            final int number = leadingNumber(parts[i]);
+            // Nothing numeric left: whatever follows belongs to the build identifier, not to the
+            // version, so the remaining components stay at zero.
+            if (number == -1) break;
+            numbers[i] = number;
         }
-        return count;
+
+        return new McVersion(numbers[0], numbers[1], numbers[2]);
+    }
+
+    private static int leadingNumber(final String part) {
+        int end = 0;
+        while (end < part.length() && Character.isDigit(part.charAt(end))) end++;
+        return end == 0 ? -1 : Integer.parseInt(part.substring(0, end));
     }
 
     private final int major;
@@ -48,7 +65,7 @@ public class McVersion implements Comparable<McVersion> {
      * Gets the currently running McVersion
      */
     public static McVersion current() {
-        return CURRENT_VERSION;
+        return Current.VALUE;
     }
 
     public boolean isAtLeast(final McVersion other) {
@@ -124,11 +141,11 @@ public class McVersion implements Comparable<McVersion> {
      *
      * @param minorNumber the version to compare the server version with.
      * @return true if the version is equal or newer, otherwise false.
-     * @see #CURRENT_VERSION
+     * @see #current()
      * @since 4.0.0
      */
     public static boolean supports(int minorNumber) {
-        return CURRENT_VERSION.isAtLeast(1, minorNumber);
+        return current().isAtLeast(1, minorNumber);
     }
 
     /**
@@ -137,11 +154,11 @@ public class McVersion implements Comparable<McVersion> {
      * @param minorNumber the version to compare the server version with.
      * @param patchNumber the version to compare the server version with.
      * @return true if the version is equal or newer, otherwise false.
-     * @see #CURRENT_VERSION
+     * @see #current()
      * @since 4.0.0
      */
     public static boolean supports(int minorNumber, int patchNumber) {
-        return CURRENT_VERSION.isAtLeast(1, minorNumber, patchNumber);
+        return current().isAtLeast(1, minorNumber, patchNumber);
     }
 
     /**
@@ -150,6 +167,6 @@ public class McVersion implements Comparable<McVersion> {
      * obfuscated/versioned CraftBukkit naming scheme used prior to 1.17.
      */
     public static boolean isModern() {
-        return CURRENT_VERSION.getMajor() > 1 || CURRENT_VERSION.getMinor() >= 17;
+        return current().getMajor() > 1 || current().getMinor() >= 17;
     }
 }
